@@ -1,4 +1,6 @@
 <?php
+require __DIR__.'/vendor/autoload.php';
+
 use EasyWeChat\Factory;
 $config = [
     'app_id' => 'wx9e2ecbc0419d67be',
@@ -17,4 +19,4 @@ $app = Factory::officialAccount($config);
 $response = $app->server->serve();
 
 // 将响应输出
-$response->send();
+$response->send(); // Laravel 里请使用：return $response;
