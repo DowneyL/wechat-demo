@@ -1,22 +1,26 @@
 <?php
-require __DIR__.'/vendor/autoload.php';
-
 use EasyWeChat\Factory;
-$config = [
+
+$options = [
     'app_id' => 'wx9e2ecbc0419d67be',
     'secret' => '4e6bf9993cb1da3f0bd9ece1aec9da6b',
-
-    'response_type' => 'array',
-
+    'token' => 'aragakicyann',
     'log' => [
         'level' => 'debug',
-        'file' => __DIR__.'/wechat.log',
+        'file' => '/wechat.log',
     ],
 ];
 
-$app = Factory::officialAccount($config);
+$app = Factory::officialAccount($options);
 
-$response = $app->server->serve();
+$server = $app->server;
+/*
+$user = $app->user;
+$server->push(function ($message) use ($user) {
+    $fromUser = $user->get($message['FromUserName']);
 
-// 将响应输出
-$response->send(); // Laravel 里请使用：return $response;
+    return "{$fromUser->nickname} 您好！欢迎关注 overtrue!";
+});
+*/
+
+$server->serve()->send();
