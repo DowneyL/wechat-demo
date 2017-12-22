@@ -1,2 +1,0 @@
-[2017-12-21 08:30:05] easywechat.officialaccount.application.DEBUG: Request received: {"method":"GET","uri":"http://localhost/wechat-demo/server.php/","content-type":null,"content":""} []
-[2017-12-21 08:30:05] easywechat.officialaccount.application.DEBUG: Server response created: {"content":"success"} []
