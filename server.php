@@ -41,6 +41,7 @@ $app->server->push(function ($message) use ($app) {
     }
 });
 
+// 加个注释
 $response = $app->server->serve();
 
 $response->send();
