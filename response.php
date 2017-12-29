@@ -27,7 +27,7 @@ var_dump($response);
  */
 
 $result = $app->template_message->send([
-    'touser' => 'o5b7Lw_IdHDPTxVYPNaEvCqVgUnw',
+    'touser' => 'o5b7Lw_onq9noT0AHX7AOR-TwUeI',
     'template_id' => 'XVTGR9XqOBiI7BrUhTDvikTrqVSD9Z7LVcwwUacaCAA',
     'url' => 'https://www.baidu.com',
     'data' => [

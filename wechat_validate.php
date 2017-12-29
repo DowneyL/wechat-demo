@@ -62,7 +62,7 @@ class wechatCallbackapiTest
 	{
         $signature = $_GET["signature"];
         $timestamp = $_GET["timestamp"];
-        $nonce = $_GET["nonce"];	
+        $nonce = $_GET["nonce"];
         		
 		$token = TOKEN;
 		$tmpArr = array($token, $timestamp, $nonce);

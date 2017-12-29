@@ -5,8 +5,8 @@ use EasyWeChat\Factory;
 use EasyWeChat\Kernel\Messages\Message;
 
 $config = require __DIR__ . '/config/official_account.php';
-$app = Factory::officialAccount($config);
 
+$app = Factory::officialAccount($config);
 
 $app->server->push(function ($message) use ($app) {
     $user = $app->user->get($message['FromUserName']);
@@ -21,7 +21,7 @@ $app->server->push(function ($message) use ($app) {
             }
             break;
         case 'text' :
-            return '你好，' . $user['nickname'] . '！你说了一句：' . $message['Content'];
+            return '你好！';
             break;
         case 'image' :
             return '收到图片消息，这是图片的地址：'.$message['PicUrl'];
