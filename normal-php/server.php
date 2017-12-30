@@ -30,6 +30,7 @@ if ($validateStr == $signature) {
 
 $postXmlStr = file_get_contents("php://input");
 //$postXmlStr = $GLOBALS['HTTP_RAW_POST_DATA'];
+
 if (!$postXmlStr) {
     echo '';
     exit;
@@ -40,13 +41,41 @@ $fromUser = $postObj->FromUserName;
 $msgType = $postObj->MsgType;
 
 switch ($msgType) {
-    case 'text' :
-        echo sendTextMessage($toUser, $fromUser, '哈哈哈，你好呀！');
+    case 'text':
+        $content = $postObj->Content;
+        switch ($content) {
+            case 'liheng' :
+                echo sprintf(sendTextMessage(), $fromUser, $toUser, time(), '啦啦啦啦');
+                break;
+            default :
+                echo sprintf(sendTextMessage(), $fromUser, $toUser, time(), $content);
+                break;
+        }
         break;
-    default :
-        echo sendTextMessage($toUser, $fromUser, '嘿嘿');
+    case 'image' :
+        $media_id = $postObj->MediaId;
+        $pic_url = $postObj->PicUrl;
+        $content = '这个图片的地址是：' . $pic_url;
+        echo sprintf(sendTextMessage(), $fromUser, $toUser, time(), $content);
+//        echo sprintf(sendImageMessage(), $fromUser, $toUser, time(), $media_id);
+        break;
 }
 
+/*
+if ($msgType == 'text') {
+    $content = $postObj->Content;
+    switch ($content) {
+        case 'liheng' :
+            echo sprintf(sendTextMessage(), $fromUser, $toUser, time(), '啦啦啦啦');
+            break;
+        default :
+            echo sprintf(sendTextMessage(), $fromUser, $toUser, time(), $content);
+            break;
+    }
+}
+*/
+
+/* 函数穿参形式
 function sendTextMessage($to, $from, $message)
 {
     $xml = "<xml>
@@ -58,5 +87,31 @@ function sendTextMessage($to, $from, $message)
         </xml>";
     return $xml;
 }
+*/
 
+function sendTextMessage()
+{
+    $xml = "<xml>
+            <ToUserName><![CDATA[%s]]></ToUserName>
+            <FromUserName><![CDATA[%s]]></FromUserName>
+            <MsgType><![CDATA[text]]></MsgType>
+            <CreateTime>%d</CreateTime>
+            <Content><![CDATA[%s]]></Content>
+            </xml>";
+    return $xml;
+}
+
+function sendImageMessage()
+{
+    $xml = "<xml>
+            <ToUserName><![CDATA[%s]]></ToUserName>
+            <FromUserName><![CDATA[%s]]></FromUserName>
+            <CreateTime>%d</CreateTime>
+            <MsgType><![CDATA[image]]></MsgType>
+            <Image>
+            <MediaId><![CDATA[%s]]></MediaId>
+            </Image>
+            </xml>";
+    return $xml;
+}
 
