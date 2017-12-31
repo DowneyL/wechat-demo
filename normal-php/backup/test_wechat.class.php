@@ -1,5 +1,5 @@
 <?php
-class weChat
+class test_weChat
 {
     public $toUser;
     public $fromUser;

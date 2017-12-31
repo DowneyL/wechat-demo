@@ -1,11 +1,20 @@
 <?php
 class weChat
 {
-    public $postObj;
-    public $toUser;
-    public $fromUser;
-    public $msgType;
+    public $config; // 存储配置信息
+    public $data; // 存储消息的数组
+    public $postObj; // 接受的消息实例
+    public $toUser; // 由谁发送
+    public $fromUser; // 发送给谁
+    public $msgType; // 消息类型
 
+    public function __construct($config, $data = "")
+    {
+        $this->config = $config;
+        $this->data = $data;
+    }
+
+    // token 校验
     public function valid()
     {
         if ($this->checkSignature()) {
@@ -45,6 +54,68 @@ class weChat
         }
     }
 
+    // 获取 access_token
+    public function getAccessToken()
+    {
+        $config = $this->config;
+        $token_url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={$config['appid']}&secret={$config['appsecret']}";
+        $access_token = $this->responseCURL($token_url);
+        return $access_token;
+    }
+
+    // http 请求模拟操作（get / post）
+    public function responseCURL($url, array $extension = array('type' => 'getAccessToken'))
+    {
+        // 初始化 cURL
+        $channel = curl_init();
+
+        // 设置传输选项
+        // 设置 url
+        curl_setopt($channel, CURLOPT_URL, $url);
+        // 设置返回方式为字段
+        curl_setopt($channel, CURLOPT_RETURNTRANSFER, 1);
+
+        // 设置 post 传输方式
+        if ($extension['type'] != NULL) {
+            if ($extension['type'] == 'post') {
+                curl_setopt($channel, CURLOPT_POST, 1);
+                curl_setopt($channel, CURLOPT_POSTFIELDS, $extension['data']);
+            }
+        } else {
+            return [
+                'error_code' => '801',
+                'error_message' => 'Wrong param!',
+            ];
+        }
+
+        // 发送 cURL， 并获取返回结果，本例中为 json 字符串
+        $result = curl_exec($channel);
+
+        $arr = json_decode($result, TRUE);
+        //dd($access_token_arr);
+
+        // 关闭 cURL 资源
+        curl_close($channel);
+
+        return is_array($arr) ? $arr : $result;
+    }
+
+    // 微信菜单操作
+    public function operateMenu($type, $menu_data) {
+        $access_token_arr = $this->getAccessToken();
+        $access_token = $access_token_arr['access_token'];
+        if (is_string($access_token)) {
+            $response_menu_url = "https://api.weixin.qq.com/cgi-bin/menu/{$type}?access_token={$access_token}";
+            $result = responseCURL($response_menu_url, $menu_data);
+            return $result;
+        } else {
+            return [
+                'error_code' => '801',
+                'error_message' => 'Wrong param!',
+            ];
+        }
+    }
+
     // 响应用户请求消息
     public function responseMsg()
     {
@@ -76,8 +147,26 @@ class weChat
             case 'image':
                 $this->receiveImage();
                 break;
+            case 'voice':
+                $this->receiveVoice();
+                break;
             case 'event':
                 $this->receiveEvent();
+                break;
+        }
+    }
+
+    public function tulingRobot($content)
+    {
+        $config = $this->config;
+        $tuling_url = "http://www.tuling123.com/openapi/api?key={$config['tuling_key']}&info={$content}";
+        $result = $this->responseCURL($tuling_url);
+        switch ($result['code']) {
+            case '100000':
+                $this->replyText($result['text']);
+                break;
+            case '200000':
+                $this->replyText("<a href='" . $result['url'] . "'>$result[text]</a>");
                 break;
         }
     }
@@ -86,79 +175,7 @@ class weChat
     public function receiveText()
     {
         $content = $this->postObj->Content;
-        switch ($content) {
-            case '点歌':
-                $content = "歌单列表如下：\n";
-                $musics = scandir(__DIR__. '/music');
-                $musics_list = '';
-                $i = 1;
-                foreach ($musics as $music) {
-                    if ($music != '.' && $music != '..') {
-                        $musics_list .= $i++ . '. ' . basename($music, ".mp3") . "\n";
-                    }
-                }
-                $content .= $musics_list . "输入编号，即可获取歌曲！/:8-)";
-                $this->replyText($content);
-                break;
-            case '笑话':
-                $this->replyText('你想听笑话？冷笑话听不听？');
-                break;
-            case '签到':
-                $this->replyText('恭喜你！签到成功！');
-                break;
-            case '抽奖':
-                $this->replyText('Oops.. 抽奖功能维护中，请稍后重试！');
-                break;
-            case '新闻':
-                $graphics = array(
-                    array(
-                        'title' => '被长辈看见用 Laravel 是一种什么样的体验？',
-                        'description' => 'Laravel是一套简洁、优雅的PHP Web开发框架(PHP Web Framework)。它可以让你从面条一样杂乱的代码中解脱出来；它可以帮你构建一个完美的 Web App，而且每行代码都可以简洁、富于表达力。',
-                        'pic_url' => 'http://www.aragakiyui.xin/normal-php/image/1.jpg',
-                        'redirect_url' => 'https://www.baidu.com',
-                    ),
-                    array(
-                        'title' => '如何评价微信小程序推出的「跳一跳」小游戏？',
-                        'description' => '1827年法国人尼塞福尔・尼埃普斯在涂有沥青的铜板上曝光了8个小时，拍摄了楼顶上的鸽子窝，这是历史上第一张成功拍摄且可以永久保存的照片。从这天开始的190年间里，对于绘画和摄影谁更艺术的争吵就一直不断。',
-                        'pic_url' => 'http://www.aragakiyui.xin/normal-php/image/2.jpg',
-                        'redirect_url' => 'https://www.baidu.com',
-                    ),
-                    array(
-                        'title' => '习惯某一款FPS游戏后玩新的FPS游戏会有哪些有意思的习惯？',
-                        'description' => '作为现代艺术的创始人，巴勃罗・毕加索曾说过：「最失落的两个职业是牙医和摄影师：牙医想当医生，摄影师想成为画家。」这句话表明了画家在那个时代对于摄影与摄影师的不屑与调侃。',
-                        'pic_url' => 'http://www.aragakiyui.xin/normal-php/image/3.jpg',
-                        'redirect_url' => 'https://www.baidu.com',
-                    ),
-                );
-
-                $this->replyGraphics($graphics);
-                break;
-            default :
-                $content = $this->postObj->Content;
-                $musicData = array();
-                if (preg_match('/^\d{1,2}$/', $content)) {
-                    $musics = scandir(__DIR__. '/music');
-                    $i = 1;
-                    foreach ($musics as $music) {
-                        if ($music != '.' && $music != '..') {
-                            if ($content == $i) {
-                                $musicData = array(
-                                    'title' => $music,
-                                    'description' => $music,
-                                    'music_url' => 'http://www.aragakiyui.xin/normal-php/music/' . $music,
-                                    'hd_music_url' => 'http://www.aragakiyui.xin/normal-php/music/' . $music,
-                                );
-                            }
-                            $i++;
-                        }
-                    }
-                    $this->replyMusic($musicData);
-                } else {
-                    $content = "本测试号提供以下功能\n回复对应关键字即可使用\n/:jump点歌\n/:kotow笑话\n/:circle签到\n/:<L>抽奖\n/:#-0新闻";
-                    $this->replyText($content);
-                }
-                break;
-        }
+        $this->tulingRobot($content);
     }
 
     // 处理图片消息
@@ -168,24 +185,53 @@ class weChat
         $this->replyImage($mediaId);
     }
 
-    // 处理时间消息
+    // 处理语音消息
+    public function receiveVoice()
+    {
+        $recognition = $this->postObj->Recognition;
+        $this->tulingRobot($recognition);
+    }
+
+    // 处理事件消息
     public function receiveEvent()
     {
         $event = $this->postObj->Event;
         switch ($event) {
             case 'subscribe':
-                $subscribe_graphics = array(
-                    array(
-                        'title' => '你好，欢迎关注本测试账号！',
-                        'description' => '本测试账号关联模具论坛，你可以点击此消息，进入论坛学习！',
-                        'pic_url' => 'http://www.aragakiyui.xin/normal-php/image/1.jpg',
-                        'redirect_url' => 'http://www.mouldbbs.com',
-                    ),
-                );
-                $this->replyGraphics($subscribe_graphics);
+                $data = $this->data;
+                if (is_array($data) && isset($data['welcome_to_subscribe'])) {
+                    $this->replyGraphics($data['welcome_to_subscribe']);
+                } else {
+                    echo '';
+                }
                 break;
             case 'unsubscribe':
                 echo '';
+                break;
+            case 'CLICK' :
+                $this->replyEventOfClick();
+                break;
+        }
+    }
+
+    // 回复菜单点击事件
+    public function replyEventOfClick()
+    {
+        $event_key = $this->postObj->EventKey;
+        switch ($event_key) {
+            case 'TODAY_NEWS':
+                $data = $this->data;
+                if (is_array($data) && isset($data['today_news'])) {
+                    $this->replyGraphics($data['today_news']);
+                } else {
+                    echo '';
+                }
+                break;
+            case 'JOKES':
+                echo '';
+                break;
+            case 'GOOD_BTN':
+                $this->replyText('谢谢您的点赞！我们会继续加油！/:,@f/:,@f/:,@f');
                 break;
         }
     }
@@ -239,6 +285,7 @@ class weChat
     // 回复图文消息
     public function replyGraphics($graphics)
     {
+        $graphics_xml_str = '';
         foreach ($graphics as $graphic) {
             $graphics_xml_str .= "<item>
                                     <Title><![CDATA[$graphic[title]]]></Title>
