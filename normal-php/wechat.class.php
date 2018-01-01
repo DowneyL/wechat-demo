@@ -2,6 +2,7 @@
 class weChat
 {
     public $config; // 存储配置信息
+    public $access_token; // 获取 access_token
     public $data; // 存储消息的数组
     public $postObj; // 接受的消息实例
     public $toUser; // 由谁发送
@@ -12,6 +13,7 @@ class weChat
     {
         $this->config = $config;
         $this->data = $data;
+        $this->access_token = $this->getAccessToken();
     }
 
     // token 校验
@@ -59,7 +61,8 @@ class weChat
     {
         $config = $this->config;
         $token_url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={$config['appid']}&secret={$config['appsecret']}";
-        $access_token = $this->responseCURL($token_url);
+        $access_token_arr = $this->responseCURL($token_url);
+        $access_token = $access_token_arr['access_token'];
         return $access_token;
     }
 
@@ -96,24 +99,7 @@ class weChat
 
         // 关闭 cURL 资源
         curl_close($channel);
-
         return is_array($arr) ? $arr : $result;
-    }
-
-    // 微信菜单操作
-    public function operateMenu($type, $menu_data) {
-        $access_token_arr = $this->getAccessToken();
-        $access_token = $access_token_arr['access_token'];
-        if (is_string($access_token)) {
-            $response_menu_url = "https://api.weixin.qq.com/cgi-bin/menu/{$type}?access_token={$access_token}";
-            $result = responseCURL($response_menu_url, $menu_data);
-            return $result;
-        } else {
-            return [
-                'error_code' => '801',
-                'error_message' => 'Wrong param!',
-            ];
-        }
     }
 
     // 响应用户请求消息
@@ -156,20 +142,22 @@ class weChat
         }
     }
 
-    public function tulingRobot($content)
-    {
-        $config = $this->config;
-        $tuling_url = "http://www.tuling123.com/openapi/api?key={$config['tuling_key']}&info={$content}";
-        $result = $this->responseCURL($tuling_url);
-        switch ($result['code']) {
-            case '100000':
-                $this->replyText($result['text']);
-                break;
-            case '200000':
-                $this->replyText("<a href='" . $result['url'] . "'>$result[text]</a>");
-                break;
+    // 微信菜单操作
+    public function operateMenu($type, $menu_data) {
+//        $access_token = $access_token_arr['access_token'];
+        if (is_string($this->access_token)) {
+            $response_menu_url = "https://api.weixin.qq.com/cgi-bin/menu/{$type}?access_token={$this->access_token}";
+            $result = responseCURL($response_menu_url, $menu_data);
+            return $result;
+        } else {
+            return [
+                'error_code' => '801',
+                'error_message' => 'Wrong param!',
+            ];
         }
     }
+
+
 
     // 处理文本消息
     public function receiveText()
@@ -228,13 +216,49 @@ class weChat
                 }
                 break;
             case 'JOKES':
-                echo '';
+                $this->replyJuHeJokes();
                 break;
             case 'GOOD_BTN':
                 $this->replyText('谢谢您的点赞！我们会继续加油！/:,@f/:,@f/:,@f');
                 break;
         }
     }
+
+    // 聚合数据笑话大全接口
+    public function replyJuHeJokes()
+    {
+        $config = $this->config;
+        if (is_array($config) && isset($config['juhe_joke_appkey'])) {
+            $juhe_joke_appkey = $config['juhe_joke_appkey'];
+            $juhe_joke_url = "http://japi.juhe.cn/joke/content/list.from?sort=asc&page=" . rand(1, 10) . "&pagesize=1&time=" . (intval(time()) - 3600 * 24) . "&key={$juhe_joke_appkey}";
+            $result = $this->responseCURL($juhe_joke_url);
+            if (is_array($result) && isset($result['result']['data']['0']['content'])) {
+                $this->replyText($result['result']['data']['0']['content']);
+            } else {
+                $this->replyText('Oops.. 笑话编辑失败，再试一次吧！');
+            }
+        } else {
+            echo "";
+        }
+    }
+
+    // 图灵机器人的自动回复
+    public function tulingRobot($content)
+    {
+        $config = $this->config;
+        $tuling_url = "http://www.tuling123.com/openapi/api?key={$config['tuling_key']}&info={$content}";
+        $result = $this->responseCURL($tuling_url);
+        switch ($result['code']) {
+            case '100000':
+                $this->replyText($result['text']);
+                break;
+            case '200000':
+                $this->replyText("<a href='" . $result['url'] . "'>$result[text]</a>");
+                break;
+        }
+    }
+
+
 
     // 回复文本消息
     public function replyText($content)
@@ -304,5 +328,45 @@ class weChat
                 </xml>";
 
         echo sprintf($xml, $this->fromUser, $this->toUser, time());
+    }
+
+    // 用户信息处理
+    public function getAllUsers($next_openid = "")
+    {
+        if (is_string($this->access_token)) {
+            $response_user_url = "https://api.weixin.qq.com/cgi-bin/user/get?access_token={$this->access_token}&next_openid={$next_openid}";
+            $result = $this->responseCURL($response_user_url);
+            return $result;
+        } else {
+            return [
+                'error_code' => '801',
+                'error_message' => 'Wrong param!',
+            ];
+        }
+    }
+
+    public function getUserInfo($open_id)
+    {
+        $data = array(
+            'type' => 'get',
+        );
+        if (is_array($open_id)) {
+            $open_id = array_values($open_id);
+            $user_list_arr = array();
+            foreach ($open_id as $key => $value) {
+                $user_list_arr['user_list'][$key]["openid"] = $value;
+            }
+            $user_list_json = json_encode($user_list_arr);
+
+            $data = array(
+                'type' => 'post',
+                'data' => $user_list_json,
+            );
+            $response_userinfo_url = "https://api.weixin.qq.com/cgi-bin/user/info/batchget?access_token={$this->access_token}";
+        } else {
+            $response_userinfo_url = "https://api.weixin.qq.com/cgi-bin/user/info?access_token={$this->access_token}&openid={$open_id}&lang=zh_CN";
+        }
+        $result = $this->responseCURL($response_userinfo_url, $data);
+        return $result;
     }
 }
