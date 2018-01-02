@@ -43,11 +43,11 @@ if ($type == 'create') {
                        "key":"JOKES"
                     }]
                },
-               {    
-                  "type":"click",
-                  "name":"赞我一下",
-                  "key":"GOOD_BTN"
-              }]
+              {
+                "type":"click",
+                "name":"论坛签到",
+                "key":"BBS_SIGN",
+             }]
             }',
     );
 }

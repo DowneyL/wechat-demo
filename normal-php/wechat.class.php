@@ -157,8 +157,6 @@ class weChat
         }
     }
 
-
-
     // 处理文本消息
     public function receiveText()
     {
@@ -221,6 +219,9 @@ class weChat
             case 'GOOD_BTN':
                 $this->replyText('谢谢您的点赞！我们会继续加油！/:,@f/:,@f/:,@f');
                 break;
+            case 'BBS_SIGN':
+                $this->replyText('签到');
+                break;
         }
     }
 
@@ -257,8 +258,6 @@ class weChat
                 break;
         }
     }
-
-
 
     // 回复文本消息
     public function replyText($content)
