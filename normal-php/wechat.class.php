@@ -1,4 +1,6 @@
 <?php
+require __DIR__ .'/db.class.php';
+
 class weChat
 {
     public $config; // 存储配置信息
@@ -220,7 +222,18 @@ class weChat
                 $this->replyText('谢谢您的点赞！我们会继续加油！/:,@f/:,@f/:,@f');
                 break;
             case 'BBS_SIGN':
-                $this->replyText('签到');
+                $db = new DB($this->config);
+                $conn = $db->dbConnect();
+                $sql = "select * from common_member where openid = '{$this->fromUser}'";
+                $result = mysqli_query($conn, $sql);
+                $userinfo = mysqli_fetch_assoc($result);
+                if (!$userinfo) {
+                    $this->replyText("抱歉，您还没有关联论坛账号！\n<a href='http://www.aragakiyui.xin/normal-php/test/bind.php?openid=". $this->fromUser ."'>点此链接关联账号》</a>");
+                } else {
+//                    $userinfo[]
+                    $this->replyText("尊敬的 $userinfo[username] , 恭喜您签到成功！");
+                }
+                $db->dbClose($conn);
                 break;
         }
     }
