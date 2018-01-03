@@ -8,7 +8,7 @@ $db_config = require  __DIR__ . '/../db/config.php';
 $db = new DB($db_config);
 
 $conn = $db->dbConnect();
-$sql = "SELECT * FROM common_member where username = 'liheng111'";
+$sql = "SELECT * FROM common_member where username = 'liheng'";
 
 $result = mysqli_query($conn, $sql);
 $users = mysqli_fetch_assoc($result);
