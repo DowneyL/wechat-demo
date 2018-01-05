@@ -381,4 +381,57 @@ class weChat
         $result = $this->responseCURL($response_userinfo_url, $data);
         return $result;
     }
+
+    public function sendTemplate($openid, $templateid, $data)
+    {
+        $url = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=" . $this->getAccessToken();
+        $params = array(
+            'touser' => "$openid",
+            'template_id' => "$templateid",
+            'url' => 'https://www.baidu.com',
+            'data' => $data,
+        );
+        $json = json_encode($params);
+//        return $json;
+        $result = $this->responseCURL($url, array('type'=>'post', 'data'=>$json));
+        return $result;
+    }
+
+    public function setIndustry($industryids)
+    {
+        $url = "https://api.weixin.qq.com/cgi-bin/template/api_set_industry?access_token=" . $this->getAccessToken();
+        $json = json_encode($industryids);
+        $result = $this->responseCURL($url, array('type'=>'post', 'data'=>$json));
+        return $result;
+    }
+
+    public function getIndustry()
+    {
+        $url = "https://api.weixin.qq.com/cgi-bin/template/get_industry?access_token=" . $this->getAccessToken();
+        $result = $this->responseCURL($url);
+        return $result;
+    }
+
+    public function getTemplateId($template_id_short)
+    {
+        $url = "https://api.weixin.qq.com/cgi-bin/template/api_add_template?access_token=" . $this->getAccessToken();
+        $json = json_encode($template_id_short);
+        $result = $this->responseCURL($url, array('type' => 'post', 'data' => $json));
+        return $result;
+    }
+
+    public function getTemplateList()
+    {
+        $url = "https://api.weixin.qq.com/cgi-bin/template/get_all_private_template?access_token=" . $this->getAccessToken();
+        $result = $this->responseCURL($url);
+        return $result;
+    }
+
+    public function deleteTemplateById($templateid)
+    {
+        $url = "https://api.weixin.qq.com/cgi-bin/template/del_private_template?access_token=" . $this->getAccessToken();
+        $json = json_encode($templateid);
+        $result = $this->responseCURL($url, array('type' => 'post', 'data' => $json));
+        return $result;
+    }
 }
