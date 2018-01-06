@@ -1,0 +1,38 @@
+* {
+    margin:0;
+    padding:0;
+}
+
+.container {
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.container > div {
+    background-color: #fbf9fe;
+}
+
+.home {
+    padding-bottom: 30px;
+}
+
+.hd {
+    padding: 2em 0;
+}
+
+.page_title {
+    text-align: center;
+    font-size: 28px;
+    color: #3cc51f;
+    font-weight: 400;
+    margin: 0 20%;
+    margin-bottom: 10px;
+}
+
+.page_desc {
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+}
+
